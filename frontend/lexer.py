@@ -18,6 +18,8 @@ class TokenType(Enum):
     OpenParen = auto()
     CloseParen = auto()
 
+    EOF = auto()
+
     def __repr__(self) -> str:
         return self.name
 
@@ -26,6 +28,7 @@ class TokenType(Enum):
         maps = {
             "令": TokenType.Let,
             "為": TokenType.Equals,
+            "取餘": TokenType.BinaryOp,
         }
         return maps.get(keyword, None)
 
@@ -57,7 +60,13 @@ def tokenize(src_code: str) -> list[Token]:
             case ")" | "）":
                 tokens.append(Token(TokenType.CloseParen, src[0]))
                 src = src[1:]
-            case "+" | "-" | "*" | "/" | "＋" | "－" | "×" | "÷":
+            case "+" | "-" | "*" | "/" | "%":
+                tokens.append(Token(TokenType.BinaryOp, src[0]))
+                src = src[1:]
+            case "＋" | "－" | "＊" | "／" | "％":
+                tokens.append(Token(TokenType.BinaryOp, src[0]))
+                src = src[1:]
+            case "加" | "減" | "乘" | "除":
                 tokens.append(Token(TokenType.BinaryOp, src[0]))
                 src = src[1:]
             case "=" | "＝":
@@ -84,6 +93,7 @@ def tokenize(src_code: str) -> list[Token]:
                     src = src[1:]
                 else:
                     raise NotImplementedError(f"Unknown token: {src[0]}")
+    tokens.append(Token(TokenType.EOF, "<EOF>"))
 
     return tokens
 
