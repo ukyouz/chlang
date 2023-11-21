@@ -64,9 +64,7 @@ class Parser:
     def _parse_additive_expression(self) -> Expression:
         left = self._parse_multiplicative_expression()
 
-        while not self.at_the_end() and self.at().value in {
-            "+", "-", "＋", "－", "加", "減"
-        }:
+        while self.at().value in {"+", "-"}:
             operator = self.eat()
             right = self._parse_multiplicative_expression()
             left = BinaryExpr(
@@ -80,9 +78,7 @@ class Parser:
     def _parse_multiplicative_expression(self) -> Expression:
         left = self._parse_primary_expression()
 
-        while not self.at_the_end() and self.at().value in {
-            "*", "/", "%", "＊", "／", "％", "乘", "除", "取餘"
-        }:
+        while self.at().value in {"*", "/", "%"}:
             operator = self.eat()
             right = self._parse_primary_expression()
             left = BinaryExpr(
