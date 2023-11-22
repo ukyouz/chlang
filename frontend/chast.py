@@ -3,11 +3,6 @@ from dataclasses import field
 
 
 @dataclass
-class NodeType:
-    ...
-
-
-@dataclass
 class Statement:
     ...
 
@@ -37,4 +32,9 @@ class Identifier(Expression):
 @dataclass
 class NumberLiteral(Expression):
     value: int | float
+
+
+@dataclass
+class NullLiteral(Expression):
+    ...
 

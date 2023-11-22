@@ -6,6 +6,7 @@ from enum import auto
 
 class TokenType(Enum):
     # Literal Types
+    Null = auto()
     Identifier = auto()
     Number = auto()
 
@@ -40,10 +41,13 @@ def _is_skippable(char: str) -> bool:
 
 KEYWORDS_TOKENS = {
     "令": TokenType.Let,
+    "Let": TokenType.Let,
+    "空": TokenType.Null,
+    "Null": TokenType.Null,
 }
 
 
-def _get_soft_token(text: str) -> tuple[Token | None, str]:
+def _get_soft_token(text: str) -> tuple[TokenType | None, str]:
     # since chinnese may also be part of identifier,
     # so tokenize it lazily
     match text:
