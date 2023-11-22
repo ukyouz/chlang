@@ -34,7 +34,3 @@ class NumberLiteral(Expression):
     value: int | float
 
 
-@dataclass
-class NullLiteral(Expression):
-    ...
-

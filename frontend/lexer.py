@@ -6,7 +6,6 @@ from enum import auto
 
 class TokenType(Enum):
     # Literal Types
-    Null = auto()
     Identifier = auto()
     Number = auto()
 
@@ -42,8 +41,6 @@ def _is_skippable(char: str) -> bool:
 KEYWORDS_TOKENS = {
     "令": TokenType.Let,
     "Let": TokenType.Let,
-    "空": TokenType.Null,
-    "Null": TokenType.Null,
 }
 
 

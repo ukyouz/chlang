@@ -1,7 +1,6 @@
 from .chast import BinaryExpr
 from .chast import Expression
 from .chast import Identifier
-from .chast import NullLiteral
 from .chast import NumberLiteral
 from .chast import Program
 from .chast import Statement
@@ -96,9 +95,6 @@ class Parser:
         match tk:
             case TokenType.Identifier:
                 return Identifier(symbol=self.eat().value)
-            case TokenType.Null:
-                self.eat()  # advance pass null keyword
-                return NullLiteral()
             case TokenType.Number:
                 if "." in self.at().value:
                     return NumberLiteral(value=float(self.eat().value))
