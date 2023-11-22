@@ -2,19 +2,28 @@ from dataclasses import dataclass
 from dataclasses import field
 
 
+# ====================================
 @dataclass
 class Statement:
     ...
 
 
 @dataclass
+class Expression(Statement):
+    ...
+
+
+# ====================================
+@dataclass
 class Program(Statement):
     body: list[Statement] = field(default_factory=list)
 
 
 @dataclass
-class Expression(Statement):
-    ...
+class VariableDeclaration(Statement):
+    identifier: str
+    value: Expression | None
+    const: bool
 
 
 @dataclass

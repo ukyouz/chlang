@@ -1,6 +1,7 @@
 import sys
 from pprint import pprint
 
+from frontend.lexer import tokenize
 from frontend.parser import Parser
 from runtime import interpreter
 from runtime import values
@@ -19,7 +20,11 @@ env.declare_variable("否", BooleanValue(False))
 env.declare_variable("Null", NullValue())
 env.declare_variable("空", NullValue())
 
-s = sys.argv[1] if len(sys.argv) > 1 else "((4))"
+s = sys.argv[1] if len(sys.argv) > 1 else "let x"
+
+pprint(tokenize(s))
+print("-----------")
+
 program = parser.produce_ast(s)
 pprint(program)
 

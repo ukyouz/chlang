@@ -1,4 +1,5 @@
 import re
+from contextlib import suppress
 from dataclasses import dataclass
 from enum import Enum
 from enum import auto
@@ -9,12 +10,17 @@ class TokenType(Enum):
     Identifier = auto()
     Number = auto()
 
+    Indent = auto()
+    NewLine = auto()
+
     # keywords
     Let = auto()
+    Const = auto()
 
     # Grouping * Operators
     BinaryOp = auto()
     Equals = auto()
+    Semicolon = auto()
     OpenParen = auto()
     CloseParen = auto()
 
@@ -35,12 +41,14 @@ class Token:
 
 
 def _is_skippable(char: str) -> bool:
-    return char in " \n\r\t"
+    return char in "\r"
 
 
 KEYWORDS_TOKENS = {
     "令": TokenType.Let,
-    "Let": TokenType.Let,
+    "let": TokenType.Let,
+    "常數": TokenType.Const,
+    "const": TokenType.Const,
 }
 
 
@@ -94,6 +102,32 @@ def tokenize(src_code: str) -> list[Token]:
                 src = src[1:]
             case "=" | "＝":
                 tokens.append(Token(TokenType.Equals, "=", src[0]))
+                src = src[1:]
+            case ";" | "；":
+                tokens.append(Token(TokenType.Semicolon, ";", src[0]))
+                src = src[1:]
+            case " " | "\t" | "　":
+                if tokens[-1].type == TokenType.Indent:
+                    raise SyntaxError("IndentationError: mixing tabs and spaces in indentation")
+                if tokens[-1].type == TokenType.NewLine:
+                    indent = ""
+                    pos = 0
+                    while src[pos] == src[0]:
+                        indent += " "
+                        pos += 1
+                    tokens.append(Token(TokenType.Indent, indent, src[:pos]))
+                    src = src[pos:]
+                else:
+                    src = src[1:]
+            case "\r":
+                with suppress(IndexError):
+                    if src[1] == "\n":
+                        tokens.append(Token(TokenType.NewLine, "\n", "\n"))
+                        src = src[2:]
+                    else:
+                        src = src[1:]
+            case "\n":
+                tokens.append(Token(TokenType.NewLine, "\n", "\n"))
                 src = src[1:]
             case _:
                 if src[0].isnumeric():
