@@ -1,3 +1,4 @@
+from frontend.chast import AssignmentExpr
 from frontend.chast import BinaryExpr
 from frontend.chast import Identifier
 from frontend.chast import NumberLiteral
@@ -19,6 +20,8 @@ def evaluate(node: Statement, env: Environment) -> RuntimeValue:
             return NumberValue(node.value)
         case Identifier():
             return expressions.eval_identifier(node, env)
+        case AssignmentExpr():
+            return expressions.eval_assignment(node, env, evaluate)
         case BinaryExpr():
             return expressions.eval_binary_expr(node, env, evaluate)
         case Program():

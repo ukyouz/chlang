@@ -1,5 +1,6 @@
 from typing import Callable
 
+from frontend.chast import AssignmentExpr
 from frontend.chast import BinaryExpr
 from frontend.chast import Identifier
 from frontend.chast import NumberLiteral
@@ -46,3 +47,9 @@ def eval_identifier(node: Identifier, env: Environment) -> RuntimeValue:
     return env.lookup_variable(node.symbol)
 
 
+def eval_assignment(node: AssignmentExpr, env: Environment, evaluate: EvalFunc) -> RuntimeValue:
+    if type(node.assigne) is not Identifier:
+        raise NotImplementedError(f"trying to assign to {type(node.assigne)=}")
+
+    value = evaluate(node.value, env)
+    return env.assign_variable(node.assigne.symbol, value)

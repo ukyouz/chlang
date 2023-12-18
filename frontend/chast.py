@@ -27,6 +27,12 @@ class VariableDeclaration(Statement):
 
 
 @dataclass
+class AssignmentExpr(Expression):
+    assigne: Expression
+    value: Expression
+
+
+@dataclass
 class BinaryExpr(Expression):
     left: Expression
     right: Expression

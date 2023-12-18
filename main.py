@@ -12,15 +12,14 @@ from runtime.values import NumberValue
 
 parser = Parser()
 env = Environment()
-env.declare_variable("x", NumberValue(5))
-env.declare_variable("True", BooleanValue(True))
-env.declare_variable("False", BooleanValue(False))
-env.declare_variable("是", BooleanValue(True))
-env.declare_variable("否", BooleanValue(False))
-env.declare_variable("Null", NullValue())
-env.declare_variable("空", NullValue())
+env.declare_variable("True", BooleanValue(True), True)
+env.declare_variable("False", BooleanValue(False), True)
+env.declare_variable("是", BooleanValue(True), True)
+env.declare_variable("否", BooleanValue(False), True)
+env.declare_variable("Null", NullValue(), True)
+env.declare_variable("空", NullValue(), True)
 
-s = sys.argv[1] if len(sys.argv) > 1 else "let x"
+s = sys.argv[1] if len(sys.argv) > 1 else "let y=8+9; y=y*6"
 
 pprint(tokenize(s))
 print("-----------")

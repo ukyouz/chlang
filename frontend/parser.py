@@ -1,3 +1,4 @@
+from .chast import AssignmentExpr
 from .chast import BinaryExpr
 from .chast import Expression
 from .chast import Identifier
@@ -103,7 +104,21 @@ class Parser:
             return VariableDeclaration(ident, value=value, const=is_const)
 
     def _parse_expression(self) -> Expression:
-        return self._parse_additive_expression()
+        return self._parser_assignment_expression()
+
+    def _parser_assignment_expression(self) -> Expression:
+        # TODO: switch to objectExpr
+        left = self._parse_additive_expression()
+
+        if (self.at().type == TokenType.Equals):
+            self.eat()  # "="
+            value = self._parse_expression()
+            return AssignmentExpr(
+                assigne=left,
+                value=value,
+            )
+
+        return left
 
     # (10 + 5) - 1
     def _parse_additive_expression(self) -> Expression:
