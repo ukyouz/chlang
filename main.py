@@ -1,33 +1,42 @@
+import re
 import sys
-from pprint import pprint
+from argparse import ArgumentParser
+from collections import defaultdict
 
+try:
+    from rich import inspect
+    from rich import print
+except ImportError:
+    pass
 from frontend.lexer import tokenize
 from frontend.parser import Parser
 from runtime import interpreter
 from runtime import values
-from runtime.environment import Environment
-from runtime.values import BooleanValue
-from runtime.values import NullValue
-from runtime.values import NumberValue
+from runtime.environment import create_global_env
 
-parser = Parser()
-env = Environment()
-env.declare_variable("True", BooleanValue(True), True)
-env.declare_variable("False", BooleanValue(False), True)
-env.declare_variable("是", BooleanValue(True), True)
-env.declare_variable("否", BooleanValue(False), True)
-env.declare_variable("Null", NullValue(), True)
-env.declare_variable("空", NullValue(), True)
+if __name__ == "__main__":
+    argparser = ArgumentParser()
+    argparser.add_argument("file", nargs="?", default="test.ch")
+    argparser.add_argument("--cmd", "-c", help="program passed in as string (terminates option list)")
+    args = argparser.parse_args()
 
-s = sys.argv[1] if len(sys.argv) > 1 else "let y=8+9; y=y*6"
+    parser = Parser()
+    env = create_global_env()
 
-pprint(tokenize(s))
-print("-----------")
+    if args.cmd:
+        src = args.cmd
+    else:
+        file = sys.argv[1] if len(sys.argv) > 1 else "test.ch"
+        with open(file) as fs:
+            src = fs.read()
 
-program = parser.produce_ast(s)
-pprint(program)
+    print(tokenize(src))
+    print("-----------")
 
-print("-----------")
-result = interpreter.evaluate(program, env)
-pprint(result)
+    program = parser.produce_ast(src)
+    print(program)
+
+    print("-----------")
+    result = interpreter.evaluate(program, env)
+    print(result)
 

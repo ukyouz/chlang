@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import Self
 
+from runtime.values import BooleanValue
+from runtime.values import NullValue
+from runtime.values import NumberValue
 from runtime.values import RuntimeValue
 
 
@@ -40,3 +43,14 @@ class Environment:
             raise RuntimeError(f"Undefined {varname!r}")
 
         return self._parent.resolve_var_scope(varname)
+
+
+def create_global_env() -> Environment:
+    env = Environment()
+    env.declare_variable("True", BooleanValue(True), True)
+    env.declare_variable("False", BooleanValue(False), True)
+    env.declare_variable("是", BooleanValue(True), True)
+    env.declare_variable("否", BooleanValue(False), True)
+    env.declare_variable("Null", NullValue(), True)
+    env.declare_variable("空", NullValue(), True)
+    return env

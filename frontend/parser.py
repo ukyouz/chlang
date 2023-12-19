@@ -3,7 +3,9 @@ from .chast import BinaryExpr
 from .chast import Expression
 from .chast import Identifier
 from .chast import NumberLiteral
+from .chast import ObjectLiteral
 from .chast import Program
+from .chast import Property
 from .chast import Statement
 from .chast import VariableDeclaration
 from .lexer import Token
@@ -41,6 +43,10 @@ class Parser:
         prev = self.at()
         if prev.type != type:
             raise ParserError("{} Expect type {!r}, got token {!r}".format(err, type, prev))
+
+    def _ignore_whitespaces(self):
+        while self.at().type in {TokenType.NewLine, TokenType.Indent}:
+            self.eat()  # ignore newlines and spaces
 
     """
     orders of prescedence
@@ -107,8 +113,7 @@ class Parser:
         return self._parser_assignment_expression()
 
     def _parser_assignment_expression(self) -> Expression:
-        # TODO: switch to objectExpr
-        left = self._parse_additive_expression()
+        left = self._parse_object_expression()
 
         if (self.at().type == TokenType.Equals):
             self.eat()  # "="
@@ -119,6 +124,56 @@ class Parser:
             )
 
         return left
+
+    def _parse_object_expression(self) -> Expression:
+        if self.at().type is not TokenType.OpenBrace:
+            return self._parse_additive_expression()
+
+        self.eat()  # eat "{"
+        self._ignore_whitespaces()
+
+        properties = []
+        while not self.at_the_end() and self.at().type is not TokenType.CloseBrace:
+
+            self.expect(
+                TokenType.Identifier,
+                "Expect an identifier as property name."
+            )
+            key = self.eat().value
+            if self.at().type is TokenType.Comma:
+                # { prop1, prop2, }, allow shorthand
+                self.eat()   # advance past comma
+                properties.append(Property(key=key, value=None))
+            elif self.at().type is TokenType.CloseBrace:
+                # { prop1 }, allow shorthand
+                properties.append(Property(key=key, value=None))
+            else:
+                # { prop1: value1, prop2: value2 }
+                self.expect(
+                    TokenType.Colon,
+                    "Expect a colon after property name."
+                )
+                self.eat()
+                value = self._parse_expression()
+                properties.append(Property(key=key, value=value))
+
+                self._ignore_whitespaces()
+
+                if self.at().type is not TokenType.CloseBrace:
+                    self.expect(
+                        TokenType.Comma,
+                        "Expect a comma after property."
+                    )
+                    self.eat()
+
+            self._ignore_whitespaces()
+
+        self.expect(
+            TokenType.CloseBrace,
+            "Expect a closing brace after object expression."
+        )
+        self.eat()
+        return ObjectLiteral(properties=properties)
 
     # (10 + 5) - 1
     def _parse_additive_expression(self) -> Expression:

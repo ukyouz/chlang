@@ -39,9 +39,23 @@ class BinaryExpr(Expression):
     operator: str
 
 
+""" Literal """
+
+
 @dataclass
 class Identifier(Expression):
     symbol: str
+
+
+@dataclass
+class Property(Expression):
+    key: str
+    value: Expression | None
+
+
+@dataclass
+class ObjectLiteral(Expression):
+    properties: list[Property]
 
 
 @dataclass

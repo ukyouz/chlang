@@ -1,15 +1,18 @@
+from collections import OrderedDict
 from typing import Callable
 
 from frontend.chast import AssignmentExpr
 from frontend.chast import BinaryExpr
 from frontend.chast import Identifier
 from frontend.chast import NumberLiteral
+from frontend.chast import ObjectLiteral
 from frontend.chast import Program
 from frontend.chast import Statement
 from frontend.chast import VariableDeclaration
 from runtime.environment import Environment
 from runtime.values import NullValue
 from runtime.values import NumberValue
+from runtime.values import ObjectValue
 from runtime.values import RuntimeValue
 
 EvalFunc = Callable[[Statement, Environment], RuntimeValue]
@@ -53,3 +56,15 @@ def eval_assignment(node: AssignmentExpr, env: Environment, evaluate: EvalFunc) 
 
     value = evaluate(node.value, env)
     return env.assign_variable(node.assigne.symbol, value)
+
+
+def eval_object_expr(obj: ObjectLiteral, env: Environment, evaluate: EvalFunc) -> RuntimeValue:
+    properties = {}
+
+    for prop in obj.properties:
+        if prop.value is None:
+            properties[prop.key] = env.lookup_variable(prop.key)
+        else:
+            properties[prop.key] = evaluate(prop.value, env)
+
+    return ObjectValue(properties=properties)

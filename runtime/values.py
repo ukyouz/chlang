@@ -21,4 +21,9 @@ class BooleanValue(RuntimeValue):
     value: bool
 
 
+@dataclass
+class ObjectValue(RuntimeValue):
+    properties: dict[str, RuntimeValue]
+
+
 

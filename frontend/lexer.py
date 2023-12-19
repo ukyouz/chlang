@@ -20,9 +20,13 @@ class TokenType(Enum):
     # Grouping * Operators
     BinaryOp = auto()
     Equals = auto()
+    Comma = auto()
+    Colon = auto()
     Semicolon = auto()
     OpenParen = auto()
     CloseParen = auto()
+    OpenBrace = auto()
+    CloseBrace = auto()
 
     EOF = auto()
 
@@ -85,6 +89,12 @@ def tokenize(src_code: str) -> list[Token]:
             case ")" | "）":
                 tokens.append(Token(TokenType.CloseParen, ")", src[0]))
                 src = src[1:]
+            case "{" | "【":
+                tokens.append(Token(TokenType.OpenBrace, "{", src[0]))
+                src = src[1:]
+            case "}" | "】":
+                tokens.append(Token(TokenType.CloseBrace, "}", src[0]))
+                src = src[1:]
             case "+" | "＋":
                 tokens.append(Token(TokenType.BinaryOp, "+", src[0]))
                 src = src[1:]
@@ -102,6 +112,12 @@ def tokenize(src_code: str) -> list[Token]:
                 src = src[1:]
             case "=" | "＝":
                 tokens.append(Token(TokenType.Equals, "=", src[0]))
+                src = src[1:]
+            case "," | "，":
+                tokens.append(Token(TokenType.Comma, ",", src[0]))
+                src = src[1:]
+            case ":" | "：":
+                tokens.append(Token(TokenType.Colon, ":", src[0]))
                 src = src[1:]
             case ";" | "；":
                 tokens.append(Token(TokenType.Semicolon, ";", src[0]))
