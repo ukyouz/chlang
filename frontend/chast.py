@@ -14,8 +14,16 @@ class Expression(Statement):
 
 
 # ====================================
+
+""" Statements """
+
 @dataclass
 class Program(Statement):
+    body: list[Statement] = field(default_factory=list)
+
+
+@dataclass
+class BlockStatement(Statement):
     body: list[Statement] = field(default_factory=list)
 
 
@@ -26,6 +34,9 @@ class VariableDeclaration(Statement):
     const: bool
 
 
+""" Expressions """
+
+
 @dataclass
 class AssignmentExpr(Expression):
     assigne: Expression
@@ -33,13 +44,26 @@ class AssignmentExpr(Expression):
 
 
 @dataclass
+class CallExpr(Expression):
+    caller: Expression
+    args: list[Expression]
+
+
+@dataclass
+class MemberExpr(Expression):
+    obj: Expression
+    prop: Expression
+    computed: bool
+
+
+""" Literals """
+
+
+@dataclass
 class BinaryExpr(Expression):
     left: Expression
     right: Expression
     operator: str
-
-
-""" Literal """
 
 
 @dataclass

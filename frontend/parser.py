@@ -1,7 +1,9 @@
 from .chast import AssignmentExpr
 from .chast import BinaryExpr
+from .chast import CallExpr
 from .chast import Expression
 from .chast import Identifier
+from .chast import MemberExpr
 from .chast import NumberLiteral
 from .chast import ObjectLiteral
 from .chast import Program
@@ -30,6 +32,7 @@ class Parser:
         while not self.at_the_end():
             statement = self._parse_statement()
             statements.append(statement)
+            self._ignore_whitespaces()
 
         return Program(body=statements)
 
@@ -51,13 +54,14 @@ class Parser:
     """
     orders of prescedence
     - assignment expression
-    - member expression
-    - function call
+    - object
     - logical expression: and, or
     - comparison expression
     - additive expression
     - multiplicative expression
     - unary expression
+    - function call
+    - member expression
     - primary expression
     """
 
@@ -191,11 +195,11 @@ class Parser:
         return left
 
     def _parse_multiplicative_expression(self) -> Expression:
-        left = self._parse_primary_expression()
+        left = self._parse_call_member_expression()
 
         while self.at().value in {"*", "/", "%"}:
             operator = self.eat()
-            right = self._parse_primary_expression()
+            right = self._parse_call_member_expression()
             left = BinaryExpr(
                 left=left,
                 right=right,
@@ -203,6 +207,80 @@ class Parser:
             )
 
         return left
+
+    def _parse_call_member_expression(self) -> Expression:
+        # foo.x()
+        member = self._parse_member_expression()
+
+        if self.at().type is TokenType.OpenParen:
+            return self._parse_call_expression(member)
+
+        return member
+
+    def _parse_call_expression(self, caller: Expression) -> Expression:
+        call_expr = CallExpr(caller=caller, args=self._parse_args())
+
+        if self.at() == TokenType.OpenParen:
+            # foo.x()()
+            call_expr = self._parse_call_expression(call_expr)
+
+        return call_expr
+
+    def _parse_args(self) -> list[Expression]:
+        self.expect(
+            TokenType.OpenParen,
+            "Expect a opening parenthesis after function call."
+        )
+        self.eat()
+        if self.at().type is TokenType.CloseParen:
+            args = []
+        else:
+            args = self. _parse_arguments_list()
+        self.expect(
+            TokenType.CloseParen,
+            "Expect a closing parenthesis after function call."
+        )
+        self.eat()
+        return args
+
+    def _parse_arguments_list(self) -> list[Expression]:
+        args = [self._parser_assignment_expression()]
+
+        while self.at().type is TokenType.Comma:
+            self.eat()
+            args.append(self._parser_assignment_expression())
+
+        return args
+
+    def _parse_member_expression(self) -> Expression:
+        obj = self._parse_primary_expression()
+
+        while self.at().type in {TokenType.Dot, TokenType.OpenBracket}:
+            operator = self.eat()
+
+            if operator.type is TokenType.Dot:
+                # non-computed values, aka obj.expr
+                computed = False
+                property = self._parse_primary_expression()
+
+                if not isinstance(property, Identifier):
+                    raise SyntaxError("Expect an identifier after '.'")
+            else:
+                computed = True
+                property = self._parse_expression()
+                self.expect(
+                    TokenType.CloseBracket,
+                    "Missing closing bracket after computed property."
+                )
+                self.eat()
+
+            obj = MemberExpr(
+                obj=obj,
+                prop=property,
+                computed=computed,
+            )
+
+        return obj
 
     def _parse_primary_expression(self) -> Expression:
         tk = self.at().type

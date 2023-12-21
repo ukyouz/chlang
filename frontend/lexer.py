@@ -20,11 +20,14 @@ class TokenType(Enum):
     # Grouping * Operators
     BinaryOp = auto()
     Equals = auto()
+    Dot = auto()
     Comma = auto()
     Colon = auto()
     Semicolon = auto()
     OpenParen = auto()
     CloseParen = auto()
+    OpenBracket = auto()
+    CloseBracket = auto()
     OpenBrace = auto()
     CloseBrace = auto()
 
@@ -89,6 +92,12 @@ def tokenize(src_code: str) -> list[Token]:
             case ")" | "）":
                 tokens.append(Token(TokenType.CloseParen, ")", src[0]))
                 src = src[1:]
+            case "[" | "《":
+                tokens.append(Token(TokenType.OpenBracket, "[", src[0]))
+                src = src[1:]
+            case "]" | "》":
+                tokens.append(Token(TokenType.CloseBracket, "]", src[0]))
+                src = src[1:]
             case "{" | "【":
                 tokens.append(Token(TokenType.OpenBrace, "{", src[0]))
                 src = src[1:]
@@ -113,7 +122,10 @@ def tokenize(src_code: str) -> list[Token]:
             case "=" | "＝":
                 tokens.append(Token(TokenType.Equals, "=", src[0]))
                 src = src[1:]
-            case "," | "，":
+            case "." | "，":
+                tokens.append(Token(TokenType.Dot, ".", src[0]))
+                src = src[1:]
+            case "," | "、":
                 tokens.append(Token(TokenType.Comma, ",", src[0]))
                 src = src[1:]
             case ":" | "：":
@@ -176,7 +188,7 @@ def tokenize(src_code: str) -> list[Token]:
 
 if __name__ == "__main__":
     from pprint import pprint
-    tokens = tokenize("令 x = 1 加 2 乘（3）")
+    tokens = tokenize("令 x = 一二三 加 2 乘（3）")
     pprint(tokens)
 
     tokens = tokenize("令 數字 為 1 + 2")
