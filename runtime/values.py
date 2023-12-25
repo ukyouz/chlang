@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Callable
 
 
 @dataclass
@@ -26,4 +27,7 @@ class ObjectValue(RuntimeValue):
     properties: dict[str, RuntimeValue]
 
 
+@dataclass
+class NativeFnValue(RuntimeValue):
+    call: Callable # Callable[[list[RuntimeValue], Environment], RuntimeValue]
 

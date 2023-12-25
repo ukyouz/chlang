@@ -3,6 +3,7 @@ from typing import Callable
 
 from frontend.chast import AssignmentExpr
 from frontend.chast import BinaryExpr
+from frontend.chast import CallExpr
 from frontend.chast import Identifier
 from frontend.chast import NumberLiteral
 from frontend.chast import ObjectLiteral
@@ -10,6 +11,7 @@ from frontend.chast import Program
 from frontend.chast import Statement
 from frontend.chast import VariableDeclaration
 from runtime.environment import Environment
+from runtime.values import NativeFnValue
 from runtime.values import NullValue
 from runtime.values import NumberValue
 from runtime.values import ObjectValue
@@ -68,3 +70,14 @@ def eval_object_expr(obj: ObjectLiteral, env: Environment, evaluate: EvalFunc) -
             properties[prop.key] = evaluate(prop.value, env)
 
     return ObjectValue(properties=properties)
+
+
+def eval_call_expr(expr: CallExpr, env: Environment, evaluate: EvalFunc) -> RuntimeValue:
+    args = [evaluate(x, env) for x in expr.args]
+    fn = evaluate(expr.caller, env)
+
+    if type(fn) is NativeFnValue:
+        return fn.call(args, env)
+    else:
+        raise NotImplementedError(f"can not call {fn=}")
+

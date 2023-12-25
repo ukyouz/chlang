@@ -3,6 +3,7 @@ from dataclasses import field
 from typing import Self
 
 from runtime.values import BooleanValue
+from runtime.values import NativeFnValue
 from runtime.values import NullValue
 from runtime.values import NumberValue
 from runtime.values import RuntimeValue
@@ -47,10 +48,23 @@ class Environment:
 
 def create_global_env() -> Environment:
     env = Environment()
+    # create default global environment
     env.declare_variable("True", BooleanValue(True), True)
     env.declare_variable("False", BooleanValue(False), True)
     env.declare_variable("是", BooleanValue(True), True)
     env.declare_variable("否", BooleanValue(False), True)
     env.declare_variable("Null", NullValue(), True)
     env.declare_variable("空", NullValue(), True)
+
+    # define a native builtin method
+    def _print(args, env):
+        print(*args)
+        return NullValue()
+    env.declare_variable("print", NativeFnValue(_print), True)
+
+    def _time(args, env):
+        from datetime import datetime
+        return NumberValue(datetime.now().timestamp())
+    env.declare_variable("time", NativeFnValue(_time), True)
+
     return env
