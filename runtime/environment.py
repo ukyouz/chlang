@@ -1,25 +1,27 @@
 from dataclasses import dataclass
 from dataclasses import field
+from typing import Callable
 from typing import Self
 
-from runtime.values import BooleanValue
-from runtime.values import NativeFnValue
-from runtime.values import NullValue
-from runtime.values import NumberValue
-from runtime.values import RuntimeValue
+from frontend.chast import Statement
+
+
+@dataclass
+class RuntimeValue:
+    ...
 
 
 @dataclass
 class Environment:
-    _parent: None | Self = field(default=None)
-    _variables: dict[str, RuntimeValue] = field(default_factory=dict)
+    parent: None | Self = field(default=None)
+    variables: dict[str, RuntimeValue] = field(default_factory=dict)
     _consts: set[str] = field(default_factory=set)
 
     def declare_variable(self, name: str, value: RuntimeValue, is_const:bool=False) -> RuntimeValue:
-        if name in self._variables:
+        if name in self.variables:
             raise RuntimeError(f"redefine {name!r}")
 
-        self._variables[name] = value
+        self.variables[name] = value
         if is_const:
             self._consts.add(name)
         return value
@@ -29,21 +31,21 @@ class Environment:
         if name in env._consts:
             raise RuntimeError(f"reassign const {name!r}")
 
-        env._variables[name] = value
+        env.variables[name] = value
         return value
 
     def lookup_variable(self, name: str) -> RuntimeValue:
         env = self.resolve_var_scope(name)
-        return env._variables[name]
+        return env.variables[name]
 
     def resolve_var_scope(self, varname: str) -> Self:
-        if varname in self._variables:
+        if varname in self.variables:
             return self
 
-        if self._parent is None:
+        if self.parent is None:
             raise RuntimeError(f"Undefined {varname!r}")
 
-        return self._parent.resolve_var_scope(varname)
+        return self.parent.resolve_var_scope(varname)
 
 
 def create_global_env() -> Environment:
@@ -68,3 +70,38 @@ def create_global_env() -> Environment:
     env.declare_variable("time", NativeFnValue(_time), True)
 
     return env
+
+
+@dataclass
+class NullValue(RuntimeValue):
+    ...
+
+
+@dataclass
+class NumberValue(RuntimeValue):
+    value: int | float
+
+
+@dataclass
+class BooleanValue(RuntimeValue):
+    value: bool
+
+
+@dataclass
+class ObjectValue(RuntimeValue):
+    properties: dict[str, RuntimeValue]
+
+
+FunctionCall = Callable[[list[RuntimeValue], Environment], RuntimeValue]
+@dataclass
+class NativeFnValue(RuntimeValue):
+    call: FunctionCall
+
+
+@dataclass
+class FunctionValue(RuntimeValue):
+    name: str
+    parameters: list[str]
+    declaration_env: Environment
+    body: list[Statement]
+

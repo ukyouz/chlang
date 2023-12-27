@@ -11,11 +11,12 @@ from frontend.chast import Program
 from frontend.chast import Statement
 from frontend.chast import VariableDeclaration
 from runtime.environment import Environment
-from runtime.values import NativeFnValue
-from runtime.values import NullValue
-from runtime.values import NumberValue
-from runtime.values import ObjectValue
-from runtime.values import RuntimeValue
+from runtime.environment import FunctionValue
+from runtime.environment import NativeFnValue
+from runtime.environment import NullValue
+from runtime.environment import NumberValue
+from runtime.environment import ObjectValue
+from runtime.environment import RuntimeValue
 
 EvalFunc = Callable[[Statement, Environment], RuntimeValue]
 
@@ -78,6 +79,20 @@ def eval_call_expr(expr: CallExpr, env: Environment, evaluate: EvalFunc) -> Runt
 
     if type(fn) is NativeFnValue:
         return fn.call(args, env)
+    elif type(fn) is FunctionValue:
+        scope = Environment(fn.declaration_env)
+
+        # create variables for function parameters
+        # TODO: check the bounds of args, verity arity of function
+        for varname, arg in zip(fn.parameters, args):
+            scope.declare_variable(varname, arg, False)
+
+        result = NullValue()
+        for statement in fn.body:
+            # evaluate statement line by line
+            result = evaluate(statement, scope)
+
+        return result
     else:
         raise NotImplementedError(f"can not call {fn=}")
 

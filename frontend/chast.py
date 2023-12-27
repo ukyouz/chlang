@@ -34,6 +34,13 @@ class VariableDeclaration(Statement):
     const: bool
 
 
+@dataclass
+class FunctionDeclaration(Statement):
+    name: str
+    params: list[str]
+    body: [Statement]
+
+
 """ Expressions """
 
 

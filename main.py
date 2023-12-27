@@ -11,7 +11,6 @@ except ImportError:
 from frontend.lexer import tokenize
 from frontend.parser import Parser
 from runtime import interpreter
-from runtime import values
 from runtime.environment import create_global_env
 
 if __name__ == "__main__":

@@ -16,6 +16,7 @@ class TokenType(Enum):
     # keywords
     Let = auto()
     Const = auto()
+    Fn = auto()
 
     # Grouping * Operators
     BinaryOp = auto()
@@ -56,6 +57,8 @@ KEYWORDS_TOKENS = {
     "let": TokenType.Let,
     "常數": TokenType.Const,
     "const": TokenType.Const,
+    "def": TokenType.Fn,
+    "定義": TokenType.Fn,
 }
 
 
@@ -168,7 +171,12 @@ def tokenize(src_code: str) -> list[Token]:
                 elif src[0].isalpha():
                     char_cnt = 0
                     src_len = len(src)
-                    while char_cnt < src_len and src[char_cnt].isalpha():
+                    while char_cnt < src_len:
+                        if char_cnt > 0:
+                            if not (src[char_cnt].isnumeric() or src[char_cnt].isalpha()):
+                                break
+                        elif not src[char_cnt].isalpha():
+                            break
                         char_cnt += 1
                     alpha, src = src[:char_cnt], src[char_cnt:]
 

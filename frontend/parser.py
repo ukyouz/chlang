@@ -2,6 +2,7 @@ from .chast import AssignmentExpr
 from .chast import BinaryExpr
 from .chast import CallExpr
 from .chast import Expression
+from .chast import FunctionDeclaration
 from .chast import Identifier
 from .chast import MemberExpr
 from .chast import NumberLiteral
@@ -29,6 +30,7 @@ class Parser:
         self.tokens = tokenize(source_code)
 
         statements = []
+        self._ignore_whitespaces()
         while not self.at_the_end():
             statement = self._parse_statement()
             statements.append(statement)
@@ -42,10 +44,10 @@ class Parser:
     def eat(self) -> Token:
         return self.tokens.pop(0)
 
-    def expect(self, type: TokenType, err: str):
+    def expect(self, token_type: TokenType, err: str):
         prev = self.at()
-        if prev.type != type:
-            raise ParserError("{} Expect type {!r}, got token {!r}".format(err, type, prev))
+        if prev.type != token_type:
+            raise ParserError("{} Expect type {!r}, got token {!r}".format(err, token_type, prev))
 
     def _ignore_whitespaces(self):
         while self.at().type in {TokenType.NewLine, TokenType.Indent}:
@@ -72,6 +74,8 @@ class Parser:
                 return self._parse_variable_declaration(True)
             case TokenType.Let:
                 return self._parse_variable_declaration(False)
+            case TokenType.Fn:
+                return self._parse_function_declaration()
             case _:
                 return self._parse_expression()
 
@@ -112,6 +116,41 @@ class Parser:
                     )
                 self.eat() # eat a newline or semicolon
             return VariableDeclaration(ident, value=value, const=is_const)
+
+    def _parse_function_declaration(self) -> Statement:
+        self.eat()  # eat "def"
+        self.expect(
+            TokenType.Identifier,
+            "Expect an identifier following `def` keyword."
+        )
+        name = self.eat().value
+        args = self._parse_args()
+        params = []
+        for arg in args:
+            if type(arg) != Identifier:
+                raise ParserError("Expect an identifier as function parameter.")
+            params.append(arg.symbol)
+
+        self.expect(
+            TokenType.OpenBrace,
+            "Expect a `{` after function parameters."
+        )
+        self.eat()
+
+        body = []
+
+        while not self.at_the_end() and self.at().type is not TokenType.CloseBrace:
+            self._ignore_whitespaces()
+            statement = self._parse_statement()
+            body.append(statement)
+            self._ignore_whitespaces()
+
+        self.expect(
+            TokenType.CloseBrace,
+            "Expect a `}` after function body."
+        )
+        self.eat()
+        return FunctionDeclaration(name=name, params=params, body=body)
 
     def _parse_expression(self) -> Expression:
         return self._parser_assignment_expression()

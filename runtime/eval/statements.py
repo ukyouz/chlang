@@ -1,15 +1,17 @@
 from typing import Callable
 
 from frontend.chast import BinaryExpr
+from frontend.chast import FunctionDeclaration
 from frontend.chast import Identifier
 from frontend.chast import NumberLiteral
 from frontend.chast import Program
 from frontend.chast import Statement
 from frontend.chast import VariableDeclaration
 from runtime.environment import Environment
-from runtime.values import NullValue
-from runtime.values import NumberValue
-from runtime.values import RuntimeValue
+from runtime.environment import FunctionValue
+from runtime.environment import NullValue
+from runtime.environment import NumberValue
+from runtime.environment import RuntimeValue
 
 EvalFunc = Callable[[Statement, Environment], RuntimeValue]
 
@@ -31,4 +33,12 @@ def eval_variable_declaration(node: VariableDeclaration, env: Environment, evalu
     return env.declare_variable(node.identifier, value, node.const)
 
 
+def eval_function_declaration(node: FunctionDeclaration, env: Environment) -> RuntimeValue:
+    fn = FunctionValue(
+        name = node.name,
+        parameters = node.params,
+        declaration_env = env,
+        body = node.body,
+    )
 
+    return env.declare_variable(node.name, fn, True)
