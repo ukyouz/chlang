@@ -15,7 +15,11 @@ class Expression(Statement):
 
 # ====================================
 
-""" Statements """
+"""
+Statements
+  no actual computed value,
+  can not chain with other statements
+"""
 
 @dataclass
 class Program(Statement):
@@ -33,10 +37,21 @@ class VariableDeclaration(Statement):
 class FunctionDeclaration(Statement):
     name: str
     params: list[str]
-    body: [Statement]
+    body: list[Statement]
 
 
-""" Expressions """
+@dataclass
+class IfStatement(Statement):
+    test: Expression
+    consequent: list[Statement]
+    alternate: list[Statement]
+
+
+"""
+Expressions
+    can be evaluated to a value,
+    can be chained with other expressions
+"""
 
 
 @dataclass
@@ -69,6 +84,13 @@ class BinaryExpr(Expression):
 
 
 @dataclass
+class LogicalExpr(Expression):
+    left: Expression
+    right: Expression
+    operator: str
+
+
+@dataclass
 class Identifier(Expression):
     symbol: str
 
@@ -92,5 +114,3 @@ class NumberLiteral(Expression):
 @dataclass
 class StringLiteral(Expression):
     value: str
-
-

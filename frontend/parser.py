@@ -4,6 +4,8 @@ from .chast import CallExpr
 from .chast import Expression
 from .chast import FunctionDeclaration
 from .chast import Identifier
+from .chast import IfStatement
+from .chast import LogicalExpr
 from .chast import MemberExpr
 from .chast import NumberLiteral
 from .chast import ObjectLiteral
@@ -78,6 +80,8 @@ class Parser:
                 return self._parse_variable_declaration(False)
             case TokenType.Fn:
                 return self._parse_function_declaration()
+            case TokenType.If:
+                return self._parse_if_statement(TokenType.If)
             case _:
                 return self._parse_expression()
 
@@ -127,8 +131,6 @@ class Parser:
         while not self.at_the_end() and self.at().type is TokenType.NewLine:
             self.eat()  # eat newline
         if self.at().type is not TokenType.Indent:
-            if new_scope:
-                raise SyntaxError("Expect an indent after `:`")
             if self.indents:
                 self.indents.pop()
                 return -1
@@ -147,6 +149,29 @@ class Parser:
             raise SyntaxError("Indentation mismatch")
         else:
             raise SyntaxError("Unexpected indent.")
+
+    def _get_block_statements(self) -> list[Statement]:
+        body = []
+
+        level_diff = self._check_indent_level(new_scope=True)
+        if level_diff == 0:
+            body.append(self._parse_statement())
+            if self.at().type is TokenType.Semicolon:
+                self.eat()
+            return body
+
+        while not self.at_the_end():
+            self.expect(
+                TokenType.Indent,
+                "Expect an indent after `:`"
+            )
+            self.eat()  # eat indent
+            statement = self._parse_statement()
+            body.append(statement)
+            if self._check_indent_level() == -1:
+                break
+
+        return body
 
     def _parse_function_declaration(self) -> Statement:
         self.eat()  # eat "def"
@@ -167,22 +192,38 @@ class Parser:
             "Expect a `:` after function parameters."
         )
         self.eat()  # eat ":"
-        assert self._check_indent_level(new_scope=True) == 1
-
-        body = []
-
-        while not self.at_the_end():
-            self.expect(
-                TokenType.Indent,
-                "Expect an indent after `:`"
-            )
-            self.eat()  # eat indent
-            statement = self._parse_statement()
-            body.append(statement)
-            if self._check_indent_level() == -1:
-                break
+        body = self._get_block_statements()
 
         return FunctionDeclaration(name=name, params=params, body=body)
+
+    def _parse_if_statement(self, expected_token_type) -> Statement:
+        self.expect(
+            expected_token_type,
+            "Expect `%s` keyword." % expected_token_type.value
+        )
+        self.eat()  # eat "if"
+        test = self._parse_object_expression()
+        self.expect(
+            TokenType.Colon,
+            "Expect `:` after if condition."
+        )
+        self.eat()  # eat ":"
+        consequent = self._get_block_statements()
+
+        if self.at().type is TokenType.Elif:
+            alternate = [self._parse_if_statement(TokenType.Elif)]
+        elif self.at().type is TokenType.Else:
+            self.eat() # eat "else"
+            self.expect(
+                TokenType.Colon,
+                "Expect `:` after else keyword."
+            )
+            self.eat()  # eat ":"
+            alternate = self._get_block_statements()
+        else:
+            alternate = []
+
+        return IfStatement(test=test, consequent=consequent, alternate=alternate)
 
     def _parse_expression(self) -> Expression:
         return self._parser_assignment_expression()
@@ -202,7 +243,7 @@ class Parser:
 
     def _parse_object_expression(self) -> Expression:
         if self.at().type is not TokenType.OpenBrace:
-            return self._parse_additive_expression()
+            return self._parser_logical_expression()
 
         self.eat()  # eat "{"
         self._ignore_whitespaces()
@@ -210,11 +251,13 @@ class Parser:
         properties = []
         while not self.at_the_end() and self.at().type is not TokenType.CloseBrace:
 
-            self.expect(
-                TokenType.Identifier,
-                "Expect an identifier as property name."
-            )
-            key = self.eat().value
+            if self.at().type is TokenType.Identifier:
+                key = self.eat().value
+            elif self.at().type is TokenType.String:
+                key = self.eat().value
+            else:
+                raise NotImplementedError("Only string and identifier are supported as property key.")
+
             if self.at().type is TokenType.Comma:
                 # { prop1, prop2, }, allow shorthand
                 self.eat()   # advance past comma
@@ -250,11 +293,25 @@ class Parser:
         self.eat()
         return ObjectLiteral(properties=properties)
 
+    def _parser_logical_expression(self) -> Expression:
+        left = self._parse_additive_expression()
+
+        while self.at().value in {"and", "or", "not"}:
+            operator = self.eat()
+            right = self._parse_additive_expression()
+            left = LogicalExpr(
+                left=left,
+                right=right,
+                operator=operator.value,
+            )
+
+        return left
+
     # (10 + 5) - 1
     def _parse_additive_expression(self) -> Expression:
         left = self._parse_multiplicative_expression()
 
-        while self.at().value in {"+", "-"}:
+        while self.at().value in {"+", "-", "<<", ">>", "^", "&", "|"}:
             operator = self.eat()
             right = self._parse_multiplicative_expression()
             left = BinaryExpr(

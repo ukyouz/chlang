@@ -18,9 +18,13 @@ class TokenType(Enum):
     Let = auto()
     Const = auto()
     Fn = auto()
+    If = auto()
+    Elif = auto()
+    Else = auto()
 
     # Grouping * Operators
     BinaryOp = auto()
+    LogicalOp = auto()
     Equals = auto()
     Dot = auto()
     Comma = auto()
@@ -54,17 +58,76 @@ def _is_skippable(char: str) -> bool:
 
 
 def _is_quote(char: str) -> bool:
-    return char in '"“”「」'
+    return char in "'\"“”「」"
 
 def _get_close_quote(char: str) -> str:
     if char == '"':
         return '"'
+    elif char == "'":
+        return "'"
     elif char == "“":
         return "”"
     elif char == "「":
         return "」"
     else:
         raise ValueError(f"Invalid quote: {char}")
+
+
+NORMALIZED_OPS = {
+    "且": "and",
+    "或": "or",
+    "非": "not",
+    "等於": "==",
+    "不等於": "!=",
+    "大於": ">",
+    "大於等於": ">=",
+    "小於": "<",
+    "小於等於": "<=",
+}
+
+OTHER_BINARY_OPS = {
+    "and": TokenType.LogicalOp,
+    "or": TokenType.LogicalOp,
+    "not": TokenType.LogicalOp,
+    "<<": TokenType.BinaryOp,
+    ">>": TokenType.BinaryOp,
+    "==": TokenType.BinaryOp,
+    "!=": TokenType.BinaryOp,
+    ">": TokenType.BinaryOp,
+    ">=": TokenType.BinaryOp,
+    "<": TokenType.BinaryOp,
+    "<=": TokenType.BinaryOp,
+    "^": TokenType.BinaryOp,
+}
+
+def _has_operator_cnt(text: str) -> int:
+    for op in OTHER_BINARY_OPS.keys():
+        if text.startswith(op):
+            return len(op)
+    for op in NORMALIZED_OPS.values():
+        if text.startswith(op):
+            return len(op)
+    return 0
+
+
+def _get_logical_op(text: str) -> bool:
+    match text:
+        case "and":
+            return TokenType.LogicalOp
+        case "&&":
+            return TokenType.LogicalOp, "&&"
+        case "or":
+            return TokenType.LogicalOp, "or"
+        case "||":
+            return TokenType.LogicalOp, "||"
+        case "^":
+            return TokenType.LogicalOp, "^"
+        case "<<":
+            return TokenType.LogicalOp, "<<"
+        case ">>":
+            return TokenType.LogicalOp, ">>"
+        case _:
+            return None
 
 
 KEYWORDS_TOKENS = {
@@ -74,6 +137,12 @@ KEYWORDS_TOKENS = {
     "const": TokenType.Const,
     "def": TokenType.Fn,
     "定義": TokenType.Fn,
+    "if": TokenType.If,
+    "若": TokenType.If,
+    "elif": TokenType.Elif,
+    "或若": TokenType.Elif,
+    "else": TokenType.Else,
+    "或者": TokenType.Else,
 }
 
 
@@ -176,7 +245,11 @@ def tokenize(src_code: str) -> list[Token]:
                 tokens.append(Token(TokenType.NewLine, "\n", "\n"))
                 src = src[1:]
             case _:
-                if src[0].isnumeric():
+                if cnt := _has_operator_cnt(src):
+                    op = NORMALIZED_OPS.get(src[:cnt], src[:cnt])
+                    tokens.append(Token(OTHER_BINARY_OPS[op], op, src[:cnt]))
+                    src = src[cnt:]
+                elif src[0].isnumeric():
                     char_cnt = 0
                     src_len = len(src)
                     while char_cnt < src_len and src[char_cnt].isnumeric():

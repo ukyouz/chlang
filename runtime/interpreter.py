@@ -3,6 +3,7 @@ from frontend.chast import BinaryExpr
 from frontend.chast import CallExpr
 from frontend.chast import FunctionDeclaration
 from frontend.chast import Identifier
+from frontend.chast import IfStatement
 from frontend.chast import NumberLiteral
 from frontend.chast import ObjectLiteral
 from frontend.chast import Program
@@ -40,6 +41,8 @@ def evaluate(node: Statement, env: Environment) -> RuntimeValue:
             return statements.eval_variable_declaration(node, env, evaluate)
         case FunctionDeclaration():
             return statements.eval_function_declaration(node, env)
+        case IfStatement():
+            return statements.eval_if_statement(node, env, evaluate)
         case _:
             raise NotImplementedError(f"evaluate {node=}")
 
