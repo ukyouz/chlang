@@ -1,3 +1,4 @@
+import functools
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Callable
@@ -48,6 +49,27 @@ class Environment:
         return self.parent.resolve_var_scope(varname)
 
 
+def rtn_wrapper(fn: Callable) -> Callable:
+    @functools.wraps(fn)
+    def wrapper(*args):
+        # TODO: support keyward arguments
+        rtn = fn(*args)
+        match rtn:
+            case int() | float():
+                return NumberValue(rtn)
+            case str():
+                return StringValue(rtn)
+            case bool():
+                return BooleanValue(rtn)
+            case dict():
+                return DictionaryValue({k: rtn_wrapper(v) for k, v in rtn.items()})
+            case None:
+                return NullValue()
+            case _:
+                raise NotImplementedError(f"Unknown return type {rtn=!r}")
+    return wrapper
+
+
 def create_global_env() -> Environment:
     env = Environment()
     # create default global environment
@@ -59,15 +81,11 @@ def create_global_env() -> Environment:
     env.declare_variable("空", NullValue(), True)
 
     # define a native builtin method
-    def _print(args, env):
-        print(*args)
-        return NullValue()
-    env.declare_variable("print", NativeFnValue(_print), True)
+    env.declare_variable("print", NativeFnValue(rtn_wrapper(print)), True)
+    env.declare_variable("輸出", NativeFnValue(rtn_wrapper(print)), True)
 
-    def _time(args, env):
-        from datetime import datetime
-        return NumberValue(datetime.now().timestamp())
-    env.declare_variable("time", NativeFnValue(_time), True)
+    from datetime import datetime
+    env.declare_variable("time", NativeFnValue(rtn_wrapper(datetime.now().timestamp)), True)
 
     return env
 
@@ -93,7 +111,7 @@ class BooleanValue(RuntimeValue):
 
 
 @dataclass
-class ObjectValue(RuntimeValue):
+class DictionaryValue(RuntimeValue):
     properties: dict[str, RuntimeValue]
 
 

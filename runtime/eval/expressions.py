@@ -10,12 +10,12 @@ from frontend.chast import ObjectLiteral
 from frontend.chast import Program
 from frontend.chast import Statement
 from frontend.chast import VariableDeclaration
+from runtime.environment import DictionaryValue
 from runtime.environment import Environment
 from runtime.environment import FunctionValue
 from runtime.environment import NativeFnValue
 from runtime.environment import NullValue
 from runtime.environment import NumberValue
-from runtime.environment import ObjectValue
 from runtime.environment import RuntimeValue
 
 EvalFunc = Callable[[Statement, Environment], RuntimeValue]
@@ -70,7 +70,7 @@ def eval_object_expr(obj: ObjectLiteral, env: Environment, evaluate: EvalFunc) -
         else:
             properties[prop.key] = evaluate(prop.value, env)
 
-    return ObjectValue(properties=properties)
+    return DictionaryValue(properties=properties)
 
 
 def eval_call_expr(expr: CallExpr, env: Environment, evaluate: EvalFunc) -> RuntimeValue:
@@ -78,7 +78,8 @@ def eval_call_expr(expr: CallExpr, env: Environment, evaluate: EvalFunc) -> Runt
     fn = evaluate(expr.caller, env)
 
     if type(fn) is NativeFnValue:
-        return fn.call(args, env)
+        # TODO: support keyward arguments
+        return fn.call(*args)
     elif type(fn) is FunctionValue:
         scope = Environment(fn.declaration_env)
 
