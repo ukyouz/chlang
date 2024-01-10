@@ -89,3 +89,8 @@ class NumberLiteral(Expression):
     value: int | float
 
 
+@dataclass
+class StringLiteral(Expression):
+    value: str
+
+

@@ -83,6 +83,11 @@ class NumberValue(RuntimeValue):
 
 
 @dataclass
+class StringValue(RuntimeValue):
+    value: str
+
+
+@dataclass
 class BooleanValue(RuntimeValue):
     value: bool
 

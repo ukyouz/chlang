@@ -7,11 +7,13 @@ from frontend.chast import NumberLiteral
 from frontend.chast import ObjectLiteral
 from frontend.chast import Program
 from frontend.chast import Statement
+from frontend.chast import StringLiteral
 from frontend.chast import VariableDeclaration
 from runtime.environment import Environment
 from runtime.environment import NullValue
 from runtime.environment import NumberValue
 from runtime.environment import RuntimeValue
+from runtime.environment import StringValue
 from runtime.eval import expressions
 from runtime.eval import statements
 
@@ -20,6 +22,8 @@ def evaluate(node: Statement, env: Environment) -> RuntimeValue:
     match node:
         case NumberLiteral():
             return NumberValue(node.value)
+        case StringLiteral():
+            return StringValue(node.value)
         case Identifier():
             return expressions.eval_identifier(node, env)
         case ObjectLiteral():

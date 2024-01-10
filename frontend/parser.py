@@ -10,6 +10,7 @@ from .chast import ObjectLiteral
 from .chast import Program
 from .chast import Property
 from .chast import Statement
+from .chast import StringLiteral
 from .chast import VariableDeclaration
 from .lexer import Token
 from .lexer import TokenType
@@ -363,6 +364,8 @@ class Parser:
                     return NumberLiteral(value=float(self.eat().value))
                 else:
                     return NumberLiteral(value=int(self.eat().value))
+            case TokenType.String:
+                return StringLiteral(value=self.eat().value)
             case TokenType.OpenParen:
                 self.eat()  # eat "("
                 value = self._parse_expression()

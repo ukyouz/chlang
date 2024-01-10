@@ -9,6 +9,7 @@ class TokenType(Enum):
     # Literal Types
     Identifier = auto()
     Number = auto()
+    String = auto()
 
     Indent = auto()
     NewLine = auto()
@@ -50,6 +51,20 @@ class Token:
 
 def _is_skippable(char: str) -> bool:
     return char in "\r"
+
+
+def _is_quote(char: str) -> bool:
+    return char in '"“”「」'
+
+def _get_close_quote(char: str) -> str:
+    if char == '"':
+        return '"'
+    elif char == "“":
+        return "”"
+    elif char == "「":
+        return "」"
+    else:
+        raise ValueError(f"Invalid quote: {char}")
 
 
 KEYWORDS_TOKENS = {
@@ -188,6 +203,19 @@ def tokenize(src_code: str) -> list[Token]:
                         tokens.append(Token(t, alpha, alpha))
                 elif _is_skippable(src[0]):
                     src = src[1:]
+                elif _is_quote(src[0]):
+                    quote = src[0]
+                    close_quote = _get_close_quote(quote)
+                    char_cnt = 1
+                    src_len = len(src)
+                    while char_cnt < src_len:
+                        if src[char_cnt] == close_quote:
+                            break
+                        char_cnt += 1
+                    if char_cnt == src_len:
+                        raise SyntaxError("SyntaxError: unterminated string")
+                    string, src = src[1:char_cnt], src[char_cnt+1:]
+                    tokens.append(Token(TokenType.String, string, string))
                 else:
                     raise NotImplementedError(f"Unknown token: {src[0]}")
     tokens.append(Token(TokenType.EOF, "<EOF>", ""))
