@@ -22,6 +22,7 @@ class ParserError(Exception):
 
 class Parser:
     tokens: list[Token] = []
+    indents: list[str] = []
 
     def at_the_end(self) -> bool:
         return self.tokens[0].type == TokenType.EOF
@@ -117,6 +118,35 @@ class Parser:
                 self.eat() # eat a newline or semicolon
             return VariableDeclaration(ident, value=value, const=is_const)
 
+    def _check_indent_level(self, new_scope=False) -> int:
+        """
+        return True if the indent continues
+        return False if the indent ends, and goes up a level
+        """
+        while not self.at_the_end() and self.at().type is TokenType.NewLine:
+            self.eat()  # eat newline
+        if self.at().type is not TokenType.Indent:
+            if new_scope:
+                raise SyntaxError("Expect an indent after `:`")
+            if self.indents:
+                self.indents.pop()
+                return -1
+            return 0
+
+        indent = self.at().value
+        if new_scope:
+            self.indents.append(indent)
+            return 1
+        if self.indents:
+            if indent == self.indents[-1]:
+                return 0
+            elif len(self.indents) >= 2 and indent == self.indents[-2]:
+                self.indents.pop()
+                return -1
+            raise SyntaxError("Indentation mismatch")
+        else:
+            raise SyntaxError("Unexpected indent.")
+
     def _parse_function_declaration(self) -> Statement:
         self.eat()  # eat "def"
         self.expect(
@@ -132,24 +162,25 @@ class Parser:
             params.append(arg.symbol)
 
         self.expect(
-            TokenType.OpenBrace,
-            "Expect a `{` after function parameters."
+            TokenType.Colon,
+            "Expect a `:` after function parameters."
         )
-        self.eat()
+        self.eat()  # eat ":"
+        assert self._check_indent_level(new_scope=True) == 1
 
         body = []
 
-        while not self.at_the_end() and self.at().type is not TokenType.CloseBrace:
-            self._ignore_whitespaces()
+        while not self.at_the_end():
+            self.expect(
+                TokenType.Indent,
+                "Expect an indent after `:`"
+            )
+            self.eat()  # eat indent
             statement = self._parse_statement()
             body.append(statement)
-            self._ignore_whitespaces()
+            if self._check_indent_level() == -1:
+                break
 
-        self.expect(
-            TokenType.CloseBrace,
-            "Expect a `}` after function body."
-        )
-        self.eat()
         return FunctionDeclaration(name=name, params=params, body=body)
 
     def _parse_expression(self) -> Expression:

@@ -23,11 +23,6 @@ class Program(Statement):
 
 
 @dataclass
-class BlockStatement(Statement):
-    body: list[Statement] = field(default_factory=list)
-
-
-@dataclass
 class VariableDeclaration(Statement):
     identifier: str
     value: Expression | None
