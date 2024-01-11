@@ -4,6 +4,7 @@ from frontend.chast import CallExpr
 from frontend.chast import FunctionDeclaration
 from frontend.chast import Identifier
 from frontend.chast import IfStatement
+from frontend.chast import LogicalExpr
 from frontend.chast import NumberLiteral
 from frontend.chast import ObjectLiteral
 from frontend.chast import Program
@@ -35,6 +36,8 @@ def evaluate(node: Statement, env: Environment) -> RuntimeValue:
             return expressions.eval_assignment(node, env, evaluate)
         case BinaryExpr():
             return expressions.eval_binary_expr(node, env, evaluate)
+        case LogicalExpr():
+            return expressions.eval_logical_expr(node, env, evaluate)
         case Program():
             return statements.eval_program(node, env, evaluate)
         case VariableDeclaration():

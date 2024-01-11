@@ -5,6 +5,7 @@ from frontend.chast import AssignmentExpr
 from frontend.chast import BinaryExpr
 from frontend.chast import CallExpr
 from frontend.chast import Identifier
+from frontend.chast import LogicalExpr
 from frontend.chast import NumberLiteral
 from frontend.chast import ObjectLiteral
 from frontend.chast import Program
@@ -75,6 +76,25 @@ def eval_binary_expr(node: BinaryExpr, env: Environment, evaluate: EvalFunc) -> 
         return NullValue()
 
     return _eval_binary_expr(lhs_val, rhs_val, node.operator)
+
+
+def eval_logical_expr(node: LogicalExpr, env: Environment, evaluate: EvalFunc) -> RuntimeValue:
+    lhs = evaluate(node.left, env)
+    rhs = evaluate(node.right, env)
+
+    if (
+        (isinstance(lhs, BooleanValue) or isinstance(lhs, NumberValue))
+        and (isinstance(rhs, BooleanValue) or isinstance(rhs, NumberValue))
+    ):
+        match node.operator:
+            case "and":
+                return BooleanValue(bool(lhs.value and rhs.value))
+            case "or":
+                return BooleanValue(bool(lhs.value or rhs.value))
+            case _:
+                raise NotImplementedError(f"eval_logical_expr {node.operator=}")
+    else:
+        raise NotImplementedError(f"logical operation between non-boolean or non-number: {lhs=} {rhs=}")
 
 
 def eval_identifier(node: Identifier, env: Environment) -> RuntimeValue:
