@@ -251,10 +251,15 @@ def tokenize(src_code: str) -> list[Token]:
                     src = src[cnt:]
                 elif src[0].isnumeric():
                     char_cnt = 0
-                    src_len = len(src)
-                    while char_cnt < src_len and src[char_cnt].isnumeric():
+                    while char_cnt < len(src) and src[char_cnt].isnumeric():
                         char_cnt += 1
                     num, src = src[:char_cnt], src[char_cnt:]
+                    if src.startswith("."):
+                        char_cnt = 1
+                        while char_cnt < len(src) and src[char_cnt].isnumeric():
+                            char_cnt += 1
+                        num += src[:char_cnt]
+                        src = src[char_cnt:]
                     tokens.append(Token(TokenType.Number, num, num))
                 elif src[0].isalpha():
                     char_cnt = 0

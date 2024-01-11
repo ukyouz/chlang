@@ -10,6 +10,7 @@ from frontend.chast import ObjectLiteral
 from frontend.chast import Program
 from frontend.chast import Statement
 from frontend.chast import VariableDeclaration
+from runtime.environment import BooleanValue
 from runtime.environment import DictionaryValue
 from runtime.environment import Environment
 from runtime.environment import FunctionValue
@@ -21,19 +22,44 @@ from runtime.environment import RuntimeValue
 EvalFunc = Callable[[Statement, Environment], RuntimeValue]
 
 
-def _eval_numeric_expr(lhs: NumberValue, rhs: NumberValue, operator: str) -> RuntimeValue:
+def _eval_binary_expr(lhs: int | float, rhs: int | float, operator: str) -> RuntimeValue:
     match operator:
         case "+":
-            return NumberValue(lhs.value + rhs.value)
+            return NumberValue(lhs + rhs)
         case "-":
-            return NumberValue(lhs.value - rhs.value)
+            return NumberValue(lhs - rhs)
         case "*":
-            return NumberValue(lhs.value * rhs.value)
+            return NumberValue(lhs * rhs)
         case "/":
-            # TODO: divide by zero check
-            return NumberValue(lhs.value / rhs.value)
+            if rhs == 0:
+                raise ZeroDivisionError()
+            return NumberValue(lhs / rhs)
         case "%":
-            return NumberValue(lhs.value % rhs.value)
+            return NumberValue(lhs % rhs)
+        case "<<":
+            if isinstance(lhs, float) or isinstance(rhs, float):
+                raise NotImplementedError("float left shift")
+            return NumberValue(lhs << rhs)
+        case ">>":
+            if isinstance(lhs, float) or isinstance(rhs, float):
+                raise NotImplementedError("float right shift")
+            return NumberValue(lhs >> rhs)
+        case "^":
+            if isinstance(lhs, float) or isinstance(rhs, float):
+                raise NotImplementedError("float xor")
+            return NumberValue(lhs ^ rhs)
+        case "!=":
+            return BooleanValue(lhs != rhs)
+        case "==":
+            return BooleanValue(lhs == rhs)
+        case ">":
+            return BooleanValue(lhs > rhs)
+        case ">=":
+            return BooleanValue(lhs >= rhs)
+        case "<":
+            return BooleanValue(lhs < rhs)
+        case "<=":
+            return BooleanValue(lhs <= rhs)
         case _:
             raise NotImplementedError(f"_eval_numeric_expr {operator=}")
 
@@ -42,11 +68,13 @@ def eval_binary_expr(node: BinaryExpr, env: Environment, evaluate: EvalFunc) -> 
     lhs = evaluate(node.left, env)
     rhs = evaluate(node.right, env)
 
-    if not isinstance(lhs, NumberValue) or not isinstance(rhs, NumberValue):
+    lhs_val = getattr(lhs, "value", None)
+    rhs_val = getattr(rhs, "value", None)
+    if lhs_val is None or rhs_val is None:
         # TODO: mix type operation
         return NullValue()
 
-    return _eval_numeric_expr(lhs, rhs, node.operator)
+    return _eval_binary_expr(lhs_val, rhs_val, node.operator)
 
 
 def eval_identifier(node: Identifier, env: Environment) -> RuntimeValue:
