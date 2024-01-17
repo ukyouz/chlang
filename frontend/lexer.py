@@ -110,26 +110,6 @@ def _has_operator_cnt(text: str) -> int:
     return 0
 
 
-def _get_logical_op(text: str) -> bool:
-    match text:
-        case "and":
-            return TokenType.LogicalOp
-        case "&&":
-            return TokenType.LogicalOp, "&&"
-        case "or":
-            return TokenType.LogicalOp, "or"
-        case "||":
-            return TokenType.LogicalOp, "||"
-        case "^":
-            return TokenType.LogicalOp, "^"
-        case "<<":
-            return TokenType.LogicalOp, "<<"
-        case ">>":
-            return TokenType.LogicalOp, ">>"
-        case _:
-            return None
-
-
 KEYWORDS_TOKENS = {
     "令": TokenType.Let,
     "let": TokenType.Let,
