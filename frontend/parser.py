@@ -143,7 +143,7 @@ class Parser:
         if self.indents:
             if indent == self.indents[-1]:
                 return 0
-            elif len(self.indents) >= 2 and indent == self.indents[-2]:
+            if len(self.indents) >= 2:
                 self.indents.pop()
                 return -1
             raise SyntaxError("Indentation mismatch")
