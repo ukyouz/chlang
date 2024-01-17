@@ -25,6 +25,7 @@ class TokenType(Enum):
     # Grouping * Operators
     BinaryOp = auto()
     LogicalOp = auto()
+    UnaryOp = auto()
     Equals = auto()
     Dot = auto()
     Comma = auto()
@@ -88,7 +89,7 @@ NORMALIZED_OPS = {
 OTHER_BINARY_OPS = {
     "and": TokenType.LogicalOp,
     "or": TokenType.LogicalOp,
-    "not": TokenType.LogicalOp,
+    "not": TokenType.UnaryOp,
     "<<": TokenType.BinaryOp,
     ">>": TokenType.BinaryOp,
     "==": TokenType.BinaryOp,
