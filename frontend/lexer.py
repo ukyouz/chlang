@@ -74,6 +74,14 @@ def _get_close_quote(char: str) -> str:
         raise ValueError(f"Invalid quote: {char}")
 
 
+def halve_fullwidth_chars(txt: str):
+    src = "？！（）《》【】＋－＊／％＝＜＞"
+    dst = "?!()[]{}+-*/%=<>"
+    for s, d in zip(src, dst):
+        txt = txt.replace(s, d)
+    return txt
+
+
 NORMALIZED_OPS = {
     "且": "and",
     "或": "or",
@@ -102,6 +110,7 @@ OTHER_BINARY_OPS = {
 }
 
 def _has_operator_cnt(text: str) -> int:
+    text = halve_fullwidth_chars(text)
     for op in OTHER_BINARY_OPS.keys():
         if text.startswith(op):
             return len(op)
