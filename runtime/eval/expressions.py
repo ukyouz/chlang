@@ -91,6 +91,18 @@ def eval_logical_expr(node: LogicalExpr, env: Environment, evaluate: EvalFunc) -
                 return BooleanValue(bool(lhs.value and rhs.value))
             case "or":
                 return BooleanValue(bool(lhs.value or rhs.value))
+            case "!=":
+                return BooleanValue(lhs.value != rhs.value)
+            case "==":
+                return BooleanValue(lhs.value == rhs.value)
+            case ">":
+                return BooleanValue(lhs.value > rhs.value)
+            case ">=":
+                return BooleanValue(lhs.value >= rhs.value)
+            case "<":
+                return BooleanValue(lhs.value < rhs.value)
+            case "<=":
+                return BooleanValue(lhs.value <= rhs.value)
             case _:
                 raise NotImplementedError(f"eval_logical_expr {node.operator=}")
     else:

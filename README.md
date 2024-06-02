@@ -77,36 +77,44 @@ The following syntaxes are all strings.
 A sample content of `testfile.ch`.
 
 ```
-定義 加法器（位移、要輸出）：
+定義 遊戲（目標值、最大嘗試次數）：
+    令 執行中 為 是
+    令 猜測次數 為 0
+    每當 執行中：
+        令 使用者輸入 為 整數（輸入（「請輸入一個數字：」））
+        若 使用者輸入 等於 目標值：
+            輸出（「賓果！」）
+            執行中 為 否
+        或若 使用者輸入 小於 目標值：
+            輸出（「GG，猜太小了！」）
+            猜測次數 為 猜測次數 加 1
+        不然：
+            輸出（「GG，猜太大了！」）
+            猜測次數 為 猜測次數 加 1
+        若 猜測次數 大於等於 最大嘗試次數：
+            輸出（「QQ，你錯太多次了！」）
+            執行中 為 否
+    猜測次數
 
-    定義 add(甲、乙) ：
-        令 結果 為 甲 加 乙 加 位移
-        若 要輸出：
-            輸出（結果）
-
-    add
-
-令 加十三 為 加法器（13、是）
-
-輸出（加十三（1、4））
+令 答案 為 123
+令 錯誤次數 為 遊戲（答案、5）
+輸出（錯誤次數）
+輸出（「程式結束。」）
 ```
 
 ```bash
 $ python3 main.py testfile.ch
 [
     Token(type=Fn, value='定義', raw='定義'),
-    Token(type=Identifier, value='adder', raw='adder'),
+    Token(type=Identifier, value='遊戲', raw='遊戲'),
     Token(type=OpenParen, value='(', raw='（'),
-    Token(type=Identifier, value='位移', raw='位移'),
+    Token(type=Identifier, value='目標值', raw='目標值'),
     Token(type=Comma, value=',', raw='、'),
-    Token(type=Identifier, value='要輸出', raw='要輸出'),
-    Token(type=CloseParen, value=')', raw='）'),
+    Token(type=Identifier, value='最大嘗試次數', raw='最大嘗試次數'),
 ...
+    Token(type=Identifier, value='輸出', raw='輸出'),
     Token(type=OpenParen, value='(', raw='（'),
-    Token(type=Number, value='1', raw='1'),
-    Token(type=Comma, value=',', raw='、'),
-    Token(type=Number, value='4', raw='4'),
-    Token(type=CloseParen, value=')', raw='）'),
+    Token(type=String, value='程式結束。', raw='程式結束。'),
     Token(type=CloseParen, value=')', raw='）'),
     Token(type=NewLine, value='\n', raw='\n'),
     Token(type=EOF, value='<EOF>', raw='')
@@ -115,38 +123,37 @@ $ python3 main.py testfile.ch
 Program(
     body=[
         FunctionDeclaration(
-            name='adder',
-            params=['位移', '要輸出'],
+            name='遊戲',
+            params=['目標值', '最大嘗試次數'],
             body=[
-                FunctionDeclaration(
-                    name='add',
-                    params=['甲', '乙'],
+                VariableDeclaration(identifier='執行中', value=Identifier(symbol='是'), const=False),
+                VariableDeclaration(identifier='猜測次數', value=NumberLiteral(value=0), const=False),
+                WhileStatement(
+                    test=Identifier(symbol='執行中'),
                     body=[
 ...
-                        IfStatement(
-                            test=Identifier(symbol='要輸出'),
-                            consequent=[CallExpr(caller=Identifier(symbol='輸出'), args=[Identifier(symbol='結果')])],
-                            alternate=[]
-                        )
                     ]
                 ),
-                Identifier(symbol='add')
+                Identifier(symbol='猜測次數')
             ]
         ),
+        VariableDeclaration(identifier='答案', value=NumberLiteral(value=123), const=False),
         VariableDeclaration(
-            identifier='加十三',
-            value=CallExpr(caller=Identifier(symbol='adder'), args=[NumberLiteral(value=13), Identifier(symbol='是')]),
+            identifier='錯誤次數',
+            value=CallExpr(caller=Identifier(symbol='遊戲'), args=[Identifier(symbol='答案'), NumberLiteral(value=5)]),
             const=False
         ),
-        CallExpr(
-            caller=Identifier(symbol='輸出'),
-            args=[CallExpr(caller=Identifier(symbol='加十三'), args=[NumberLiteral(value=1), NumberLiteral(value=4)])]
-        )
+        CallExpr(caller=Identifier(symbol='輸出'), args=[Identifier(symbol='錯誤次數')]),
+        CallExpr(caller=Identifier(symbol='輸出'), args=[StringLiteral(value='程式結束。')])
     ]
 )
 -----------
-NumberValue(value=18)  <- output of 輸出（加十三（1、4））
-NullValue()  <- return value of 輸出, default return Null
+StringValue(value='請輸入一個數字：')12
+StringValue(value='GG，猜太小了！')
+StringValue(value='請輸入一個數字：')123
+StringValue(value='賓果！')
+NumberValue(value=1)
+StringValue(value='程式結束。')
 NullValue()  <- return value of the program, which is the last expression.
 ```
 

@@ -14,6 +14,8 @@ from .chast import Property
 from .chast import Statement
 from .chast import StringLiteral
 from .chast import VariableDeclaration
+from .chast import WhileStatement
+from .lexer import OTHER_BINARY_OPS
 from .lexer import Token
 from .lexer import TokenType
 from .lexer import tokenize
@@ -82,6 +84,8 @@ class Parser:
                 return self._parse_function_declaration()
             case TokenType.If:
                 return self._parse_if_statement(TokenType.If)
+            case TokenType.While:
+                return self._parse_while_statement()
             case _:
                 return self._parse_expression()
 
@@ -123,6 +127,25 @@ class Parser:
                 self.eat() # eat a newline or semicolon
             return VariableDeclaration(ident, value=value, const=is_const)
 
+    def _enter_indent(self):
+        while not self.at_the_end() and self.at().type is TokenType.NewLine:
+            self.eat()
+        self.expect(
+            TokenType.Indent,
+            "Expect a Indent."
+        )
+        self.indents.append(self.at().value)
+
+    def _exit_indent(self):
+        self.indents.pop()
+
+    def _in_the_same_indent(self) -> bool:
+        while not self.at_the_end() and self.at().type is TokenType.NewLine:
+            self.eat()
+        if self.indents and self.at().type is TokenType.Indent:
+            return self.indents[-1] == self.at().value
+        return False
+
     def _check_indent_level(self, new_scope=False) -> int:
         """
         return True if the indent continues
@@ -153,23 +176,21 @@ class Parser:
     def _get_block_statements(self) -> list[Statement]:
         body = []
 
-        level_diff = self._check_indent_level(new_scope=True)
-        if level_diff == 0:
-            body.append(self._parse_statement())
-            if self.at().type is TokenType.Semicolon:
-                self.eat()
-            return body
+        self._enter_indent()
+        # level_diff = self._check_indent_level(new_scope=True)
+        # if level_diff == 0:
+        #     body.append(self._parse_statement())
+        #     if self.at().type is TokenType.Semicolon:
+        #         self.eat()
+        #     return body
 
         while not self.at_the_end():
-            self.expect(
-                TokenType.Indent,
-                "Expect an indent after `:`"
-            )
+            if not self._in_the_same_indent():
+                break
             self.eat()  # eat indent
             statement = self._parse_statement()
             body.append(statement)
-            if self._check_indent_level() == -1:
-                break
+        self._exit_indent()
 
         return body
 
@@ -210,20 +231,37 @@ class Parser:
         self.eat()  # eat ":"
         consequent = self._get_block_statements()
 
-        if self.at().type is TokenType.Elif:
-            alternate = [self._parse_if_statement(TokenType.Elif)]
-        elif self.at().type is TokenType.Else:
-            self.eat() # eat "else"
-            self.expect(
-                TokenType.Colon,
-                "Expect `:` after else keyword."
-            )
-            self.eat()  # eat ":"
-            alternate = self._get_block_statements()
-        else:
-            alternate = []
+        alternate = []
+        if self._in_the_same_indent():
+            self.eat()  # eat indent
+            if self.at().type is TokenType.Elif:
+                alternate = [self._parse_if_statement(TokenType.Elif)]
+            elif self.at().type is TokenType.Else:
+                self.eat() # eat "else"
+                self.expect(
+                    TokenType.Colon,
+                    "Expect `:` after else keyword."
+                )
+                self.eat()  # eat ":"
+                alternate = self._get_block_statements()
 
         return IfStatement(test=test, consequent=consequent, alternate=alternate)
+
+    def _parse_while_statement(self) -> Statement:
+        self.expect(
+            TokenType.While,
+            "Expect `%s` keyword." % TokenType.While.value
+        )
+        self.eat()  # eat "while"
+        cond = self._parse_object_expression()
+        self.expect(
+            TokenType.Colon,
+            "Expect `:` after while condition."
+        )
+        self.eat()  # eat ":"
+        body = self._get_block_statements()
+
+        return WhileStatement(test=cond, body=body)
 
     def _parse_expression(self) -> Expression:
         return self._parser_assignment_expression()
@@ -296,7 +334,7 @@ class Parser:
     def _parser_logical_expression(self) -> Expression:
         left = self._parse_additive_expression()
 
-        while self.at().value in {"and", "or", "not"}:
+        while self.at().value in OTHER_BINARY_OPS:
             operator = self.eat()
             right = self._parse_additive_expression()
             left = LogicalExpr(

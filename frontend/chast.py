@@ -47,6 +47,12 @@ class IfStatement(Statement):
     alternate: list[Statement]
 
 
+@dataclass
+class WhileStatement(Statement):
+    test: Expression
+    body: list[Statement]
+
+
 """
 Expressions
     can be evaluated to a value,

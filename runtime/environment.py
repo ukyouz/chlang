@@ -19,8 +19,8 @@ class Environment:
     _consts: set[str] = field(default_factory=set)
 
     def declare_variable(self, name: str, value: RuntimeValue, is_const:bool=False) -> RuntimeValue:
-        if name in self.variables:
-            raise RuntimeError(f"redefine {name!r}")
+        # if name in self.variables:
+        #     raise RuntimeError(f"redefine {name!r}")
 
         self.variables[name] = value
         if is_const:
@@ -70,6 +70,14 @@ def rtn_wrapper(fn: Callable) -> Callable:
     return wrapper
 
 
+def _int(arg: RuntimeValue) -> RuntimeValue:
+    match arg:
+        case StringValue():
+            return int(arg.value)
+        case _:
+            raise RuntimeError(f"Expected NumberValue, got {arg!r}")
+
+
 def create_global_env() -> Environment:
     env = Environment()
     # create default global environment
@@ -82,7 +90,9 @@ def create_global_env() -> Environment:
 
     # define a native builtin method
     env.declare_variable("print", NativeFnValue(rtn_wrapper(print)), True)
+    env.declare_variable("輸入", NativeFnValue(rtn_wrapper(input)), True)
     env.declare_variable("輸出", NativeFnValue(rtn_wrapper(print)), True)
+    env.declare_variable("整數", NativeFnValue(rtn_wrapper(_int)), True)
 
     from datetime import datetime
     env.declare_variable("time", NativeFnValue(rtn_wrapper(datetime.now().timestamp)), True)

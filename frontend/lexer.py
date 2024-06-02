@@ -21,6 +21,7 @@ class TokenType(Enum):
     If = auto()
     Elif = auto()
     Else = auto()
+    While = auto()
 
     # Grouping * Operators
     BinaryOp = auto()
@@ -88,10 +89,10 @@ NORMALIZED_OPS = {
     "非": "not",
     "等於": "==",
     "不等於": "!=",
-    "大於": ">",
     "大於等於": ">=",
-    "小於": "<",
+    "大於": ">",
     "小於等於": "<=",
+    "小於": "<",
 }
 
 OTHER_BINARY_OPS = {
@@ -112,10 +113,10 @@ OTHER_BINARY_OPS = {
 def _has_operator_cnt(text: str) -> int:
     text = halve_fullwidth_chars(text)
     for op in OTHER_BINARY_OPS.keys():
-        if text.startswith(op):
+        if text == op:
             return len(op)
-    for op in NORMALIZED_OPS.values():
-        if text.startswith(op):
+    for op in NORMALIZED_OPS.keys():
+        if text == op:
             return len(op)
     return 0
 
@@ -132,7 +133,9 @@ KEYWORDS_TOKENS = {
     "elif": TokenType.Elif,
     "或若": TokenType.Elif,
     "else": TokenType.Else,
-    "或者": TokenType.Else,
+    "不然": TokenType.Else,
+    "while": TokenType.While,
+    "每當": TokenType.While,
 }
 
 
@@ -235,11 +238,7 @@ def tokenize(src_code: str) -> list[Token]:
                 tokens.append(Token(TokenType.NewLine, "\n", "\n"))
                 src = src[1:]
             case _:
-                if cnt := _has_operator_cnt(src):
-                    op = NORMALIZED_OPS.get(src[:cnt], src[:cnt])
-                    tokens.append(Token(OTHER_BINARY_OPS[op], op, src[:cnt]))
-                    src = src[cnt:]
-                elif src[0].isnumeric():
+                if src[0].isnumeric():
                     char_cnt = 0
                     while char_cnt < len(src) and src[char_cnt].isnumeric():
                         char_cnt += 1
@@ -266,6 +265,9 @@ def tokenize(src_code: str) -> list[Token]:
                     t, normailzed = _get_soft_token(alpha)
                     if t is not None:
                         tokens.append(Token(t, normailzed, alpha))
+                    elif _has_operator_cnt(alpha):
+                        op = NORMALIZED_OPS.get(alpha, alpha)
+                        tokens.append(Token(OTHER_BINARY_OPS[op], op, alpha))
                     else:
                         t = KEYWORDS_TOKENS.get(alpha, TokenType.Identifier)
                         tokens.append(Token(t, alpha, alpha))

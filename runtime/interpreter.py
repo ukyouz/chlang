@@ -11,6 +11,7 @@ from frontend.chast import Program
 from frontend.chast import Statement
 from frontend.chast import StringLiteral
 from frontend.chast import VariableDeclaration
+from frontend.chast import WhileStatement
 from runtime.environment import Environment
 from runtime.environment import NullValue
 from runtime.environment import NumberValue
@@ -46,6 +47,8 @@ def evaluate(node: Statement, env: Environment) -> RuntimeValue:
             return statements.eval_function_declaration(node, env)
         case IfStatement():
             return statements.eval_if_statement(node, env, evaluate)
+        case WhileStatement():
+            return statements.eval_while_statement(node, env, evaluate)
         case _:
             raise NotImplementedError(f"evaluate {node=}")
 

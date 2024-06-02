@@ -5,6 +5,7 @@ from frontend.chast import IfStatement
 from frontend.chast import Program
 from frontend.chast import Statement
 from frontend.chast import VariableDeclaration
+from frontend.chast import WhileStatement
 from runtime.environment import BooleanValue
 from runtime.environment import DictionaryValue
 from runtime.environment import Environment
@@ -59,5 +60,15 @@ def eval_if_statement(node: IfStatement, env: Environment, evaluate: EvalFunc) -
     last_evaluated = NullValue()
     for statement in body:
         last_evaluated = evaluate(statement, env)
+
+    return last_evaluated
+
+
+def eval_while_statement(node: WhileStatement, env: Environment, evaluate: EvalFunc) -> RuntimeValue:
+    last_evaluated = NullValue()
+
+    while evaluate(node.test, env).value:
+        for statement in node.body:
+            last_evaluated = evaluate(statement, env)
 
     return last_evaluated
